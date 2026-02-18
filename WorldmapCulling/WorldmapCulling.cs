@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using BepInEx;
 using HarmonyLib;
 using Jotunn.Entities;
@@ -39,6 +40,9 @@ namespace WorldmapCulling
 
         class Minimap_UpdatePins_Patch
         {
+            private static float zoomThreshold = 0.3f;
+            private static float rememberedPinSizeLarge = -1f;
+            
             static void Prefix(Minimap __instance, out MinimapUpdatePinsState __state)
             {
                 __state = new MinimapUpdatePinsState()
@@ -52,20 +56,23 @@ namespace WorldmapCulling
                     return;
                 }
 
-                if (__instance.m_largeZoom <= 0.3f)
+                if (__instance.m_largeZoom <= zoomThreshold)
                 {
                     return;
                 }
 
-                __instance.m_showNamesZoom = 0.3f;
+                __instance.m_showNamesZoom = zoomThreshold;
+                __instance.m_pinSizeLarge = __state.ogPinSizeLarge * (1f + zoomThreshold - __instance.m_largeZoom);
 
-                // TODO Ineffecient, should only do it if zoom changed
-                foreach (var pin in __instance.m_pins)
+                if (__instance.m_pinSizeLarge != rememberedPinSizeLarge)
                 {
-                    __instance.DestroyPinMarker(pin);
+                    foreach (var pin in __instance.m_pins)
+                    {
+                        __instance.DestroyPinMarker(pin);
+                    }
+
+                    rememberedPinSizeLarge = __instance.m_pinSizeLarge;
                 }
-                
-                __instance.m_pinSizeLarge = __state.ogPinSizeLarge * (1.3f - __instance.m_largeZoom);
             }
 
             static void Postfix(Minimap __instance, MinimapUpdatePinsState __state)
