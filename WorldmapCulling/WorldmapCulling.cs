@@ -28,21 +28,50 @@ namespace WorldmapCulling
             // Register the Harmony patches
             Harmony.CreateAndPatchAll(typeof(WorldmapCulling).Assembly, PluginGUID);
         }
-        
-        [HarmonyPatch(typeof(Minimap), nameof(Minimap.UpdateMap))]
 
-        class Minimap_UpdateMap_Patch
+        class MinimapUpdatePinsState
         {
-            static void Prefix(Minimap __instance, Player player, float dt, bool takeInput)
+            public float ogShowNamesZoom;
+            public float ogPinSizeLarge;
+        }
+        
+        [HarmonyPatch(typeof(Minimap), nameof(Minimap.UpdatePins))]
+
+        class Minimap_UpdatePins_Patch
+        {
+            static void Prefix(Minimap __instance, out MinimapUpdatePinsState __state)
             {
+                __state = new MinimapUpdatePinsState()
+                {
+                    ogShowNamesZoom = __instance.m_showNamesZoom,
+                    ogPinSizeLarge = __instance.m_pinSizeLarge,
+                };
+
                 if (__instance.m_mode != Minimap.MapMode.Large)
                 {
                     return;
                 }
 
+                if (__instance.m_largeZoom <= 0.3f)
+                {
+                    return;
+                }
+
                 __instance.m_showNamesZoom = 0.3f;
+
+                // TODO Ineffecient, should only do it if zoom changed
+                foreach (var pin in __instance.m_pins)
+                {
+                    __instance.DestroyPinMarker(pin);
+                }
                 
-                Jotunn.Logger.LogInfo($"We zoom {__instance.m_largeZoom} / {__instance.m_showNamesZoom}");
+                __instance.m_pinSizeLarge = __state.ogPinSizeLarge * (1.3f - __instance.m_largeZoom);
+            }
+
+            static void Postfix(Minimap __instance, MinimapUpdatePinsState __state)
+            {
+                __instance.m_showNamesZoom = __state.ogShowNamesZoom;
+                __instance.m_pinSizeLarge = __state.ogPinSizeLarge;
             }
         }
     }
