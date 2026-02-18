@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using BepInEx;
 using HarmonyLib;
 using Jotunn.Entities;
@@ -96,6 +97,43 @@ namespace WorldmapCulling
                     {
                         pin.m_NamePinData.PinNameGameObject.SetActive(false);
                     }
+                }
+            }
+        }
+
+        [HarmonyPatch]
+        [SuppressMessage("ReSharper", "UnusedMember.Local")]
+        private class Minimap_DelayActivation_MoveNext_Patch
+        {
+            private static MethodBase TargetMethod()
+            {
+                var nested = AccessTools.FirstInner(typeof(Minimap), t => t.Name.Contains("DelayActivation"));
+
+                return AccessTools.Method(nested, "MoveNext");
+            }
+
+            private static void Postfix(object __instance)
+            {
+                var type = __instance.GetType();
+                var minimapField = AccessTools.Field(type, "<>4__this");
+                var minimap = minimapField.GetValue(__instance) as Minimap;
+
+                if (minimap == null)
+                {
+                    return;
+                }
+
+                if (minimap.m_mode != Minimap.MapMode.Large || minimap.m_largeZoom <= ZoomThreshold)
+                {
+                    return;
+                }
+
+                var goField = AccessTools.Field(__instance.GetType(), "go");
+                var go = goField?.GetValue(__instance) as GameObject;
+
+                if (go != null && go.activeSelf)
+                {
+                    go.SetActive(false);
                 }
             }
         }
