@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using BepInEx;
+using BepInEx.Configuration;
 using HarmonyLib;
 using Jotunn.Entities;
 using Jotunn.Managers;
@@ -14,17 +15,46 @@ namespace WorldmapCulling
     //[NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.Minor)]
     internal class WorldmapCulling : BaseUnityPlugin
     {
-        public const string PluginGUID = "birdhimself.WorldmapCulling";
-        public const string PluginName = "WorldmapCulling";
+        private static WorldmapCulling PluginInstance;
+
+        private const string PluginGUID = "birdhimself.WorldmapCulling";
+        private const string PluginName = "WorldmapCulling";
         public const string PluginVersion = "0.0.1";
-        private const float ZoomThreshold = 0.3f;
+
+        private ConfigEntry<bool> configHideNamesEnabled;
+        private ConfigEntry<float> configHideNamesThreshold;
+        private ConfigEntry<bool> configZoomIconsEnabled;
+        private ConfigEntry<float> configZoomIconsThreshold;
+        private ConfigEntry<float> configZoomIconsMinimumSize;
 
         // Use this class to add your own localization to the game
         // https://valheim-modding.github.io/Jotunn/tutorials/localization.html
         public static CustomLocalization Localization = LocalizationManager.Instance.GetLocalization();
 
+        private static bool ShouldHideNames(Minimap instance)
+        {
+            return PluginInstance.configHideNamesEnabled.Value
+                   && instance.m_mode == Minimap.MapMode.Large
+                   && instance.m_largeZoom > PluginInstance.configHideNamesThreshold.Value;
+        }
+
+        private static bool ShouldZoomIcons(Minimap instance)
+        {
+            return PluginInstance.configZoomIconsEnabled.Value
+                   && instance.m_mode == Minimap.MapMode.Large
+                   && instance.m_largeZoom > PluginInstance.configZoomIconsThreshold.Value;
+        }
+
         private void Awake()
         {
+            PluginInstance = this;
+
+            configZoomIconsEnabled = Config.Bind("General", "ZoomIconsEnabled", true, "Whether to zoom icons");
+            configZoomIconsThreshold = Config.Bind("General", "ZoomIconsThreshold", 0.3f, new ConfigDescription("Zoom threshold when icon size will start to be reduced", new AcceptableValueRange<float>(0.0f, 1.0f)));
+            configHideNamesEnabled = Config.Bind("General", "HideNamesEnabled", true, "Whether to hide names");
+            configHideNamesThreshold = Config.Bind("General", "HideNamesThreshold", 0.3f, new ConfigDescription("Zoom threshold when names will be hidden", new AcceptableValueRange<float>(0.0f, 1.0f)));
+            configZoomIconsMinimumSize = Config.Bind("General", "ZoomIconsMinimumSize", 0.3f, new ConfigDescription("Minimum icon size when zooming icons", new AcceptableValueRange<float>(0.1f, 1.0f)));
+
             // Jotunn comes with its own Logger class to provide a consistent Log style for all mods using it
             Jotunn.Logger.LogInfo("WorldmapCulling has landed");
 
@@ -43,6 +73,24 @@ namespace WorldmapCulling
         {
             private static float _rememberedPinSizeLarge = -1f;
 
+            private static float ComputeIconSize(Minimap instance)
+            {
+                var zoom = instance.m_largeZoom;
+                var pinSize = instance.m_pinSizeLarge;
+                var threshold = PluginInstance.configZoomIconsThreshold.Value;
+                var minimumSize = PluginInstance.configZoomIconsMinimumSize.Value;
+
+                if (zoom <= threshold)
+                {
+                    return 1.0f;
+                }
+
+                var t = (zoom - threshold) / (1.0f - threshold);
+                var factor = 1.0f - t * (1.0f - minimumSize);
+
+                return factor * pinSize;
+            }
+
             private static void Prefix(Minimap __instance, out MinimapUpdatePinsState __state)
             {
                 __state = new MinimapUpdatePinsState()
@@ -50,12 +98,12 @@ namespace WorldmapCulling
                     OgPinSizeLarge = __instance.m_pinSizeLarge,
                 };
 
-                if (__instance.m_mode != Minimap.MapMode.Large || __instance.m_largeZoom <= ZoomThreshold)
+                if (!ShouldZoomIcons(__instance))
                 {
                     return;
                 }
 
-                __instance.m_pinSizeLarge = (__instance.m_pinSizeLarge * ZoomThreshold) / __instance.m_largeZoom;
+                __instance.m_pinSizeLarge = ComputeIconSize(__instance);
 
                 // ReSharper disable once CompareOfFloatsByEqualityOperator
                 if (__instance.m_pinSizeLarge != _rememberedPinSizeLarge)
@@ -81,11 +129,12 @@ namespace WorldmapCulling
             {
                 __instance.m_pinSizeLarge = __state.OgPinSizeLarge;
 
-                if (__instance.m_mode != Minimap.MapMode.Large || __instance.m_largeZoom <= ZoomThreshold)
+                if (!ShouldHideNames(__instance))
                 {
                     return;
                 }
 
+                // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
                 foreach (var pin in __instance.m_pins)
                 {
                     if (pin.m_type is Minimap.PinType.Ping or Minimap.PinType.Player or Minimap.PinType.Shout)
@@ -123,7 +172,7 @@ namespace WorldmapCulling
                     return;
                 }
 
-                if (minimap.m_mode != Minimap.MapMode.Large || minimap.m_largeZoom <= ZoomThreshold)
+                if (!ShouldHideNames(minimap))
                 {
                     return;
                 }
