@@ -8,17 +8,17 @@ using Jotunn.Managers;
 using UnityEngine;
 // ReSharper disable InconsistentNaming
 
-namespace WorldmapCulling
+namespace MapPinDeclutter
 {
     [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
     [BepInDependency(Jotunn.Main.ModGuid)]
     //[NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.Minor)]
-    internal class WorldmapCulling : BaseUnityPlugin
+    internal class MapPinDeclutter : BaseUnityPlugin
     {
-        private static WorldmapCulling PluginInstance;
+        private static MapPinDeclutter PluginInstance;
 
-        private const string PluginGUID = "birdhimself.WorldmapCulling";
-        private const string PluginName = "WorldmapCulling";
+        private const string PluginGUID = "birdhimself.MapPinDeclutter";
+        private const string PluginName = "MapPinDeclutter";
         public const string PluginVersion = "0.0.1";
 
         private ConfigEntry<bool> configHideNamesEnabled;
@@ -56,10 +56,10 @@ namespace WorldmapCulling
             configZoomIconsMinimumSize = Config.Bind("General", "ZoomIconsMinimumSize", 0.3f, new ConfigDescription("Minimum icon size when zooming icons", new AcceptableValueRange<float>(0.1f, 1.0f)));
 
             // Jotunn comes with its own Logger class to provide a consistent Log style for all mods using it
-            Jotunn.Logger.LogInfo("WorldmapCulling has landed");
+            Jotunn.Logger.LogInfo("MapPinDeclutter has landed");
 
             // Register the Harmony patches
-            Harmony.CreateAndPatchAll(typeof(WorldmapCulling).Assembly, PluginGUID);
+            Harmony.CreateAndPatchAll(typeof(MapPinDeclutter).Assembly, PluginGUID);
         }
 
         private class MinimapUpdatePinsState
