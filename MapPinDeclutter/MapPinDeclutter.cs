@@ -202,20 +202,15 @@ internal class MapPinDeclutter : BaseUnityPlugin
 
             if (go == null || !go.activeSelf) return;
 
-            if (PluginInstance.configHideNamesByDistanceEnalbed.Value)
-            {
-                var pin = minimap.m_pins.FirstOrDefault(p =>
-                    p.m_NamePinData?.PinNameGameObject != null &&
-                    p.m_NamePinData.PinNameGameObject.GetInstanceID() == go.GetInstanceID());
+            var pin = minimap.m_pins.FirstOrDefault(p =>
+                p.m_NamePinData?.PinNameGameObject != null &&
+                p.m_NamePinData.PinNameGameObject.GetInstanceID() == go.GetInstanceID());
 
-                if (pin == null) return;
+            if (pin == null) return;
 
-                go.SetActive(ShouldShowNameForPin(minimap, pin));
-            }
-            else
-            {
-                go.SetActive(false);
-            }
+            go.SetActive(PluginInstance.configHideNamesByDistanceEnalbed.Value
+                ? ShouldShowNameForPin(minimap, pin)
+                : ShouldAlwaysShowName(pin));
         }
     }
 }
