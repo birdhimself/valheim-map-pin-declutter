@@ -24,13 +24,7 @@ internal class MapPinDeclutter : BaseUnityPlugin
     private const string PluginName = "MapPinDeclutter";
     public const string PluginVersion = "0.1.0";
 
-    private ConfigEntry<bool> configHideNamesEnabled;
-    private ConfigEntry<float> configHideNamesThreshold;
-    private ConfigEntry<bool> configZoomIconsEnabled;
-    private ConfigEntry<float> configZoomIconsThreshold;
-    private ConfigEntry<float> configZoomIconsMinimumSize;
-    private ConfigEntry<bool> configHideNamesByDistanceEnalbed;
-    private ConfigEntry<int> configHideNamesByDistanceThreshold;
+    private PluginConfiguration config;
 
     // Use this class to add your own localization to the game
     // https://valheim-modding.github.io/Jotunn/tutorials/localization.html
@@ -38,16 +32,16 @@ internal class MapPinDeclutter : BaseUnityPlugin
 
     private static bool ShouldHideNames(Minimap instance)
     {
-        return PluginInstance.configHideNamesEnabled.Value
+        return PluginInstance.config.HideNamesEnabled.Value
                && instance.m_mode == Minimap.MapMode.Large
-               && instance.m_largeZoom > PluginInstance.configHideNamesThreshold.Value;
+               && instance.m_largeZoom > PluginInstance.config.HideNamesThreshold.Value;
     }
 
     private static bool ShouldShowNameForPin(Minimap instance, Minimap.PinData pin)
     {
         if (ShouldAlwaysShowName(pin)) return true;
 
-        var tolerance = PluginInstance.configHideNamesByDistanceThreshold.Value * instance.m_largeZoom;
+        var tolerance = PluginInstance.config.HideNamesByDistanceThreshold.Value * instance.m_largeZoom;
 
         var x = pin.m_pos.x;
         var z = pin.m_pos.z;
@@ -71,32 +65,16 @@ internal class MapPinDeclutter : BaseUnityPlugin
 
     private static bool ShouldZoomIcons(Minimap instance)
     {
-        return PluginInstance.configZoomIconsEnabled.Value
+        return PluginInstance.config.ZoomIconsEnabled.Value
                && instance.m_mode == Minimap.MapMode.Large
-               && instance.m_largeZoom > PluginInstance.configZoomIconsThreshold.Value;
+               && instance.m_largeZoom > PluginInstance.config.ZoomIconsThreshold.Value;
     }
 
     private void Awake()
     {
         PluginInstance = this;
 
-        configZoomIconsEnabled = Config.Bind("General", "ZoomIconsEnabled", true, "Whether to zoom icons");
-        configZoomIconsThreshold = Config.Bind("General", "ZoomIconsThreshold", 0.3f,
-            new ConfigDescription("Zoom threshold when icon size will start to be reduced",
-                new AcceptableValueRange<float>(0.015f, 1.0f)));
-        configHideNamesEnabled = Config.Bind("General", "HideNamesEnabled", true, "Whether to hide names");
-        configHideNamesThreshold = Config.Bind("General", "HideNamesThreshold", 0.02f,
-            new ConfigDescription("Zoom threshold when names will be hidden",
-                new AcceptableValueRange<float>(0.015f, 1.0f)));
-        configZoomIconsMinimumSize = Config.Bind("General", "ZoomIconsMinimumSize", 0.3f,
-            new ConfigDescription("Minimum icon size when zooming icons", new AcceptableValueRange<float>(0.1f, 1.0f)));
-        configHideNamesByDistanceEnalbed = Config.Bind("General", "HideNamesByDistanceEnabled", true,
-            "Whether to hide names by distance to other pins instead of simply hiding all names");
-        configHideNamesByDistanceThreshold =
-            Config.Bind("General", "HideNamesByDistanceThreshold", 1000,
-                new ConfigDescription(
-                    "Pins that have other pins within this distance will have their names hidden (calculated relative to the current zoom level)",
-                    new AcceptableValueRange<int>(100, 3000)));
+        config = new PluginConfiguration(Config);
 
         // Jotunn comes with its own Logger class to provide a consistent Log style for all mods using it
         Jotunn.Logger.LogInfo("MapPinDeclutter has landed");
@@ -120,8 +98,8 @@ internal class MapPinDeclutter : BaseUnityPlugin
         {
             var zoom = instance.m_largeZoom;
             var pinSize = instance.m_pinSizeLarge;
-            var threshold = PluginInstance.configZoomIconsThreshold.Value;
-            var minimumSize = PluginInstance.configZoomIconsMinimumSize.Value;
+            var threshold = PluginInstance.config.ZoomIconsThreshold.Value;
+            var minimumSize = PluginInstance.config.ZoomIconsMinimumSize.Value;
 
             if (zoom <= threshold) return 1.0f;
 
@@ -171,7 +149,8 @@ internal class MapPinDeclutter : BaseUnityPlugin
 
                 if (pin.m_NamePinData != null && pin.m_NamePinData.PinNameGameObject != null)
                     pin.m_NamePinData.PinNameGameObject.SetActive(
-                        PluginInstance.configHideNamesByDistanceEnalbed.Value && ShouldShowNameForPin(__instance, pin));
+                        PluginInstance.config.HideNamesByDistanceEnabled.Value &&
+                        ShouldShowNameForPin(__instance, pin));
             }
         }
     }
@@ -208,7 +187,7 @@ internal class MapPinDeclutter : BaseUnityPlugin
 
             if (pin == null) return;
 
-            go.SetActive(PluginInstance.configHideNamesByDistanceEnalbed.Value
+            go.SetActive(PluginInstance.config.HideNamesByDistanceEnabled.Value
                 ? ShouldShowNameForPin(minimap, pin)
                 : ShouldAlwaysShowName(pin));
         }
