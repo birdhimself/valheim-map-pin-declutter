@@ -22,7 +22,7 @@ internal class MapPinDeclutter : BaseUnityPlugin
 
     private const string PluginGUID = "birdhimself.MapPinDeclutter";
     private const string PluginName = "MapPinDeclutter";
-    public const string PluginVersion = "0.2.0";
+    public const string PluginVersion = "0.2.1";
 
     private PluginConfiguration config;
 
