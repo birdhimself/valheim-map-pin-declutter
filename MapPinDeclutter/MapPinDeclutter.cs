@@ -1,4 +1,6 @@
+using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Reflection;
 using BepInEx;
 using BepInEx.Configuration;
@@ -27,6 +29,8 @@ internal class MapPinDeclutter : BaseUnityPlugin
     private ConfigEntry<bool> configZoomIconsEnabled;
     private ConfigEntry<float> configZoomIconsThreshold;
     private ConfigEntry<float> configZoomIconsMinimumSize;
+    private ConfigEntry<bool> configHideNamesByDistanceEnalbed;
+    private ConfigEntry<int> configHideNamesByDistanceThreshold;
 
     // Use this class to add your own localization to the game
     // https://valheim-modding.github.io/Jotunn/tutorials/localization.html
@@ -37,6 +41,32 @@ internal class MapPinDeclutter : BaseUnityPlugin
         return PluginInstance.configHideNamesEnabled.Value
                && instance.m_mode == Minimap.MapMode.Large
                && instance.m_largeZoom > PluginInstance.configHideNamesThreshold.Value;
+    }
+
+    private static bool ShouldShowNameForPin(Minimap instance, Minimap.PinData pin)
+    {
+        if (ShouldAlwaysShowName(pin)) return true;
+
+        var tolerance = PluginInstance.configHideNamesByDistanceThreshold.Value * instance.m_largeZoom;
+
+        var x = pin.m_pos.x;
+        var z = pin.m_pos.z;
+
+        var count = instance.m_pins.Count(p =>
+        {
+            var xDistance = Math.Abs(p.m_pos.x - x);
+            var zDistance = Math.Abs(p.m_pos.z - z);
+
+            return xDistance <= tolerance && zDistance <= tolerance;
+        });
+
+        // The given pin is always included in the result so a count of 1 should still show the pin.
+        return count <= 1;
+    }
+
+    private static bool ShouldAlwaysShowName(Minimap.PinData pin)
+    {
+        return pin.m_type is Minimap.PinType.Ping or Minimap.PinType.Player or Minimap.PinType.Shout;
     }
 
     private static bool ShouldZoomIcons(Minimap instance)
@@ -53,13 +83,20 @@ internal class MapPinDeclutter : BaseUnityPlugin
         configZoomIconsEnabled = Config.Bind("General", "ZoomIconsEnabled", true, "Whether to zoom icons");
         configZoomIconsThreshold = Config.Bind("General", "ZoomIconsThreshold", 0.3f,
             new ConfigDescription("Zoom threshold when icon size will start to be reduced",
-                new AcceptableValueRange<float>(0.0f, 1.0f)));
+                new AcceptableValueRange<float>(0.015f, 1.0f)));
         configHideNamesEnabled = Config.Bind("General", "HideNamesEnabled", true, "Whether to hide names");
-        configHideNamesThreshold = Config.Bind("General", "HideNamesThreshold", 0.3f,
+        configHideNamesThreshold = Config.Bind("General", "HideNamesThreshold", 0.02f,
             new ConfigDescription("Zoom threshold when names will be hidden",
-                new AcceptableValueRange<float>(0.0f, 1.0f)));
+                new AcceptableValueRange<float>(0.015f, 1.0f)));
         configZoomIconsMinimumSize = Config.Bind("General", "ZoomIconsMinimumSize", 0.3f,
             new ConfigDescription("Minimum icon size when zooming icons", new AcceptableValueRange<float>(0.1f, 1.0f)));
+        configHideNamesByDistanceEnalbed = Config.Bind("General", "HideNamesByDistanceEnabled", true,
+            "Whether to hide names by distance to other pins instead of simply hiding all names");
+        configHideNamesByDistanceThreshold =
+            Config.Bind("General", "HideNamesByDistanceThreshold", 1000,
+                new ConfigDescription(
+                    "Pins that have other pins within this distance will have their names hidden (calculated relative to the current zoom level)",
+                    new AcceptableValueRange<int>(100, 3000)));
 
         // Jotunn comes with its own Logger class to provide a consistent Log style for all mods using it
         Jotunn.Logger.LogInfo("MapPinDeclutter has landed");
@@ -130,10 +167,11 @@ internal class MapPinDeclutter : BaseUnityPlugin
             // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
             foreach (var pin in __instance.m_pins)
             {
-                if (pin.m_type is Minimap.PinType.Ping or Minimap.PinType.Player or Minimap.PinType.Shout) continue;
+                if (ShouldAlwaysShowName(pin)) continue;
 
                 if (pin.m_NamePinData != null && pin.m_NamePinData.PinNameGameObject != null)
-                    pin.m_NamePinData.PinNameGameObject.SetActive(false);
+                    pin.m_NamePinData.PinNameGameObject.SetActive(
+                        PluginInstance.configHideNamesByDistanceEnalbed.Value && ShouldShowNameForPin(__instance, pin));
             }
         }
     }
@@ -162,7 +200,22 @@ internal class MapPinDeclutter : BaseUnityPlugin
             var goField = AccessTools.Field(__instance.GetType(), "go");
             var go = goField?.GetValue(__instance) as GameObject;
 
-            if (go != null && go.activeSelf) go.SetActive(false);
+            if (go == null || !go.activeSelf) return;
+
+            if (PluginInstance.configHideNamesByDistanceEnalbed.Value)
+            {
+                var pin = minimap.m_pins.FirstOrDefault(p =>
+                    p.m_NamePinData?.PinNameGameObject != null &&
+                    p.m_NamePinData.PinNameGameObject.GetInstanceID() == go.GetInstanceID());
+
+                if (pin == null) return;
+
+                go.SetActive(ShouldShowNameForPin(minimap, pin));
+            }
+            else
+            {
+                go.SetActive(false);
+            }
         }
     }
 }
