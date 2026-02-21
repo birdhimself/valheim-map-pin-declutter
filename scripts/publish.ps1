@@ -2,10 +2,10 @@ param(
     [Parameter(Mandatory)]
     [ValidateSet('Debug','Release')]
     [System.String]$Target,
-    
+
     [Parameter(Mandatory)]
     [System.String]$TargetPath,
-    
+
     [Parameter(Mandatory)]
     [System.String]$TargetAssembly,
 
@@ -14,7 +14,7 @@ param(
 
     [Parameter(Mandatory)]
     [System.String]$ProjectPath,
-    
+
     [System.String]$DeployPath
 )
 
@@ -46,7 +46,7 @@ if ($Target.Equals("Debug")) {
     if ($DeployPath.Equals("")){
       $DeployPath = "$ValheimPath\BepInEx\plugins"
     }
-    
+
     $plug = New-Item -Type Directory -Path "$DeployPath\$name" -Force
     Write-Host "Copy $TargetAssembly to $plug"
     Copy-Item -Path "$TargetPath\$name.dll" -Destination "$plug" -Force
@@ -62,7 +62,7 @@ if($Target.Equals("Release")) {
     Write-Host "$PackagePath\$TargetAssembly"
     New-Item -Type Directory -Path "$PackagePath\plugins" -Force
     Copy-Item -Path "$TargetPath\$TargetAssembly" -Destination "$PackagePath\plugins\$TargetAssembly" -Force
-    Copy-Item -Path "$ProjectPath\README.md" -Destination "$PackagePath\README.md" -Force
+    Copy-Item -Path "$ProjectPath\..\README.md" -Destination "$PackagePath\README.md" -Force
     Compress-Archive -Path "$PackagePath\*" -DestinationPath "$TargetPath\$TargetAssembly.zip" -Force
 }
 

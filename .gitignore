@@ -373,3 +373,6 @@ Environment.props
 
 # not the generated dll for thunderstore
 */Package/plugins/*
+
+# README.md is copied from the project root
+*/Package/README.md
