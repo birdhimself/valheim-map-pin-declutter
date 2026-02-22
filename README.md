@@ -10,7 +10,7 @@ This mod uses BepInEx configuration that can be changed via its configuration fi
 
 - **HideNamesEnabled** (default: `true`): enable hiding of pin names on the map. When enabled, pin names will be hidden based on zoom level or proximity to other pins
 - **HideNamesThreshold** (default: `0.02`): the map zoom level above which pin names are hidden. Higher values mean names are hidden at a greater zoom-out distance. Ranges from `0.015` to `1.0`
-- **HideNamesByDistanceEnabled** (default: `true`): when enabled, pin names are hidden only for pins that are crowded together, rather than hiding all names at once. Requires *HideNamesEnabled* to be enbaled
+- **HideNamesByDistanceEnabled** (default: `true`): when enabled, pin names are hidden only for pins that are crowded together, rather than hiding all names at once. Requires *HideNamesEnabled* to be enabled
 - **HideNamesByDistanceThreshold** (default: `1000`): the world-unit radius used to detect crowded pins. A pin's name will be hidden if any other pin falls within this distance, scaled to the current zoom level. Increase to hide names in more sparse areas. Ranges from `100` to `3000`
 
 ### Zooming icons
