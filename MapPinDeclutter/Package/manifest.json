@@ -1,6 +1,6 @@
 ﻿{
   "name": "MapPinDeclutter",
-  "description": "Declutters the world map by hiding pin names and zooming pin icons.",
+  "description": "Declutters the world map by hiding pin names in clustered areas and scaling down pin icons as you zoom out.",
   "version_number": "0.2.1",
   "website_url": "https://github.com/birdhimself/valheim-map-pin-declutter",
   "dependencies": [

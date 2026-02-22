@@ -1,6 +1,6 @@
 # MapPinDeclutter
 
-This Valheim mod attempts to declutter the world map by hiding the names of (most) pins when viewing the map zoomed out. It can also scale pin icons depending on zoom level.
+This Valheim mod declutters the world map by hiding pin names in clustered areas and scaling down pin icons as you zoom out.
 
 ## Configuration
 
