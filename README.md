@@ -8,13 +8,13 @@ This mod uses BepInEx configuration that can be changed via its configuration fi
 
 ### Hiding names
 
-- **HideNamesEnabled** (default: `true`): enable the hide names functionality
-- **HideNamesThreshold** (default: `0.02`): when to start hiding names - this is based on the zoom level the map in Valheim uses and can range from `0.015` to `1.0`, with higher numbers meaning it'll trigger at a more zoomed out level
-- **HideNamesByDistanceEnabled** (default: `true`): enable hiding names by distance instead of just zoom level - names will only be hidden if other pins are too close when *HideNamesThreshold* is reached
-- **HideNamesByDistanceThreshold** (default: `1000`): distance between pin coordinates (x and z axis) where other pins are considered within the threshold for hiding names - this threshold is multiplied by the current zoom level of the map, range from `100` to `3000`
+- **HideNamesEnabled** (default: `true`): enable hiding of pin names on the map. When enabled, pin names will be hidden based on zoom level or proximity to other pins
+- **HideNamesThreshold** (default: `0.02`): the map zoom level above which pin names are hidden. Higher values mean names are hidden at a greater zoom-out distance. Ranges from `0.015` to `1.0`
+- **HideNamesByDistanceEnabled** (default: `true`): when enabled, pin names are hidden only for pins that are crowded together, rather than hiding all names at once. Requires *HideNamesEnabled* to be enbaled
+- **HideNamesByDistanceThreshold** (default: `1000`): the world-unit radius used to detect crowded pins. A pin's name will be hidden if any other pin falls within this distance, scaled to the current zoom level. Increase to hide names in more sparse areas. Ranges from `100` to `3000`
 
 ### Zooming icons
 
-- **ZoomIconsEnabled** (default: `true`): enable the icon zooming functionality
-- **ZoomIconsThreshold** (default: `0.3`): when to start zooming icons - this is based on the zoom level the map in Valheim uses and can range from `0.015` to `1.0`, with higher numbers meaning it'll trigger at a more zoomed out level
-- **ZoomIconsMinimumSize** (default: `0.3`): minimum size of the minimap pin icons when zoomed out as far as possible - ranges from `0.1` to `1.0` (`1.0` effectively disabling the feature) and is relative to the original Valheim pin size
+- **ZoomIconsEnabled** (default: `true`): enable scaling down of pin icons when zooming out. When enabled, icons will shrink as the map is zoomed out to reduce visual clutter
+- **ZoomIconsThreshold** (default: `0.3`): the map zoom level at which pin icons begin to shrink. Above this threshold, icons scale down proportionally until they reach *ZoomIconsMinimumSize*. Ranges from `0.015` to `1.0`
+- **ZoomIconsMinimumSize** (default: `0.3`): the smallest size pin icons can be scaled to when zooming out, as a fraction of their original size (e.g. `0.3` = 30% of full size). Prevents icons from becoming too small to see. Ranges from `0.1` to `1.0`

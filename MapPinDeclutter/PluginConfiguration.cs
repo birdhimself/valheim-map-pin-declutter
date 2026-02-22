@@ -20,14 +20,14 @@ public class PluginConfiguration
             "General",
             "HideNamesEnabled",
             true,
-            "Whether to hide names"
+            "Enable hiding of pin names on the map. When enabled, pin names will be hidden based on zoom level or proximity to other pins."
         );
         HideNamesThreshold = config.Bind(
             "General",
             "HideNamesThreshold",
             0.02f,
             new ConfigDescription(
-                "Zoom threshold when names will be hidden",
+                "The map zoom level above which pin names are hidden. Higher values mean names are hidden at a greater zoom-out distance.",
                 new AcceptableValueRange<float>(0.015f, 1.0f)
             )
         );
@@ -36,14 +36,14 @@ public class PluginConfiguration
             "General",
             "HideNamesByDistanceEnabled",
             true,
-            "Whether to hide names by distance to other pins instead of simply hiding all names"
+            "When enabled, pin names are hidden only for pins that are crowded together, rather than hiding all names at once. Requires HideNamesEnabled to be enabled."
         );
         HideNamesByDistanceThreshold = config.Bind(
             "General",
             "HideNamesByDistanceThreshold",
             1000,
             new ConfigDescription(
-                "Pins that have other pins within this distance will have their names hidden (calculated relative to the current zoom level)",
+                "The coordinate radius used to detect crowded pins. A pin's name will be hidden if any other pin falls within this distance, scaled to the current zoom level. Increase to hide names in more sparse areas.",
                 new AcceptableValueRange<int>(100, 3000)
             )
         );
@@ -52,14 +52,14 @@ public class PluginConfiguration
             "General",
             "ZoomIconsEnabled",
             true,
-            "Whether to zoom icons"
+            "Enable scaling down of pin icons when zooming out. When enabled, icons will shrink as the map is zoomed out to reduce visual clutter."
         );
         ZoomIconsThreshold = config.Bind(
             "General",
             "ZoomIconsThreshold",
             0.3f,
             new ConfigDescription(
-                "Zoom threshold when icon size will start to be reduced",
+                "The map zoom level at which pin icons begin to shrink. Above this threshold, icons scale down proportionally until they reach ZoomIconsMinimumSize.",
                 new AcceptableValueRange<float>(0.015f, 1.0f)
             )
         );
@@ -68,7 +68,7 @@ public class PluginConfiguration
             "ZoomIconsMinimumSize",
             0.3f,
             new ConfigDescription(
-                "Minimum icon size when zooming icons",
+                "The smallest size pin icons can be scaled to when zooming out, as a fraction of their original size (e.g. 0.3 = 30% of full size). Prevents icons from becoming too small to see.",
                 new AcceptableValueRange<float>(0.1f, 1.0f)
             )
         );
