@@ -3,7 +3,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using BepInEx;
-using BepInEx.Configuration;
 using HarmonyLib;
 using Jotunn.Entities;
 using Jotunn.Managers;
